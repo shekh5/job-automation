@@ -1,0 +1,41 @@
+{
+  "provider": "ashby",
+  "now": "2026-06-22T08:00:00+00:00",
+  "source": {
+    "company": "Example Ashby",
+    "provider": "ashby",
+    "slug": "example",
+    "api_url": "https://api.ashbyhq.com/posting-api/job-board/example"
+  },
+  "raw_payload": {
+    "id": "ashby-1",
+    "title": "Graduate Software Engineer",
+    "location": "India",
+    "secondaryLocations": [{"location": "Remote"}],
+    "department": "Engineering",
+    "employmentType": "FullTime",
+    "workplaceType": "Remote",
+    "descriptionPlain": "Entry-level role",
+    "publishedAt": "2026-06-20T10:00:00Z",
+    "applyUrl": "https://jobs.ashbyhq.com/example/ashby-1/application"
+  },
+  "expected_job": {
+    "schema_version": 1,
+    "company": "Example Ashby",
+    "source": "ashby",
+    "source_id": "ashby-1",
+    "title": "Graduate Software Engineer",
+    "location": "India; Remote",
+    "locations": ["India", "Remote"],
+    "department": "Engineering",
+    "team": "",
+    "employment_type": "FullTime",
+    "workplace_type": "Remote",
+    "description": "Entry-level role",
+    "updated_at": "",
+    "first_published": "2026-06-20T10:00:00+00:00",
+    "freshness_days": 14,
+    "url": "https://jobs.ashbyhq.com/example/ashby-1/application",
+    "apply_url": "https://jobs.ashbyhq.com/example/ashby-1/application"
+  }
+}

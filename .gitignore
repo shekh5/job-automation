@@ -1,0 +1,14 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+*.py[cod]
+
+# OpenClaw state and secrets (from migration docs)
+.openclaw/
+memory/
+logs/
+profile.json
+openclaw-workspace-state.json

@@ -1,0 +1,43 @@
+{
+  "provider": "lever",
+  "now": "2026-06-22T08:00:00+00:00",
+  "source": {
+    "company": "Example Lever",
+    "provider": "lever",
+    "slug": "example",
+    "api_url": "https://api.lever.co/v0/postings/example?mode=json"
+  },
+  "raw_payload": {
+    "id": "lever-1",
+    "text": "Associate Software Engineer",
+    "categories": {
+      "location": "Bengaluru, India",
+      "allLocations": ["Bengaluru, India"],
+      "department": "Engineering",
+      "team": "Platform",
+      "commitment": "Full-time"
+    },
+    "workplaceType": "hybrid",
+    "descriptionPlain": "0-2 years of experience",
+    "applyUrl": "https://jobs.lever.co/example/lever-1/apply"
+  },
+  "expected_job": {
+    "schema_version": 1,
+    "company": "Example Lever",
+    "source": "lever",
+    "source_id": "lever-1",
+    "title": "Associate Software Engineer",
+    "location": "Bengaluru, India",
+    "locations": ["Bengaluru, India"],
+    "department": "Engineering",
+    "team": "Platform",
+    "employment_type": "Full-time",
+    "workplace_type": "hybrid",
+    "description": "0-2 years of experience",
+    "updated_at": "",
+    "first_published": "",
+    "freshness_days": 14,
+    "url": "https://jobs.lever.co/example/lever-1/apply",
+    "apply_url": "https://jobs.lever.co/example/lever-1/apply"
+  }
+}

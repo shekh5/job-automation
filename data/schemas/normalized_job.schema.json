@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "normalized_job.schema.json",
+  "title": "Normalized ATS Job",
+  "description": "Canonical job record emitted by every ATS provider adapter.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "company",
+    "source",
+    "source_id",
+    "title",
+    "location",
+    "locations",
+    "department",
+    "team",
+    "employment_type",
+    "workplace_type",
+    "description",
+    "updated_at",
+    "first_published",
+    "freshness_days",
+    "url",
+    "apply_url"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "company": {"type": "string", "minLength": 1},
+    "source": {
+      "type": "string",
+      "enum": ["greenhouse", "lever", "ashby", "workday"]
+    },
+    "source_id": {"type": "string", "minLength": 1},
+    "title": {"type": "string", "minLength": 1},
+    "location": {"type": "string", "minLength": 1},
+    "locations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "department": {"type": "string"},
+    "team": {"type": "string"},
+    "employment_type": {"type": "string"},
+    "workplace_type": {"type": "string"},
+    "description": {"type": "string"},
+    "updated_at": {
+      "type": "string",
+      "description": "UTC ISO-8601 timestamp or an empty string when unavailable."
+    },
+    "first_published": {
+      "type": "string",
+      "description": "UTC ISO-8601 timestamp or an empty string when unavailable."
+    },
+    "freshness_days": {"type": "integer", "minimum": 1},
+    "url": {"type": "string", "format": "uri"},
+    "apply_url": {"type": "string", "format": "uri"}
+  }
+}

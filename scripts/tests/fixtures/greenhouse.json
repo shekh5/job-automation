@@ -1,0 +1,41 @@
+{
+  "provider": "greenhouse",
+  "now": "2026-06-22T08:00:00+00:00",
+  "source": {
+    "company": "Example Greenhouse",
+    "provider": "greenhouse",
+    "slug": "example",
+    "api_url": "https://boards-api.greenhouse.io/v1/boards/example/jobs"
+  },
+  "raw_payload": {
+    "id": 101,
+    "title": "Software Engineer Intern",
+    "location": {"name": "Hybrid"},
+    "metadata": [
+      {"name": "Job Posting Location", "value": ["Bengaluru, India"]}
+    ],
+    "departments": [{"name": "Engineering"}],
+    "content": "<p>Graduate role</p>",
+    "absolute_url": "https://boards.greenhouse.io/example/jobs/101",
+    "updated_at": "2026-06-21T10:00:00Z"
+  },
+  "expected_job": {
+    "schema_version": 1,
+    "company": "Example Greenhouse",
+    "source": "greenhouse",
+    "source_id": "101",
+    "title": "Software Engineer Intern",
+    "location": "Bengaluru, India; Hybrid",
+    "locations": ["Bengaluru, India", "Hybrid"],
+    "department": "Engineering",
+    "team": "",
+    "employment_type": "",
+    "workplace_type": "",
+    "description": "Graduate role",
+    "updated_at": "2026-06-21T10:00:00+00:00",
+    "first_published": "",
+    "freshness_days": 14,
+    "url": "https://boards.greenhouse.io/example/jobs/101",
+    "apply_url": "https://boards.greenhouse.io/example/jobs/101"
+  }
+}

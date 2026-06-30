@@ -1,0 +1,40 @@
+{
+  "provider": "workday",
+  "now": "2026-06-22T08:00:00+00:00",
+  "source": {
+    "company": "Example Workday",
+    "provider": "workday",
+    "host": "example.wd5.myworkdayjobs.com",
+    "tenant": "example",
+    "site": "ExampleCareers",
+    "slug": "ExampleCareers",
+    "api_url": "https://example.wd5.myworkdayjobs.com/wday/cxs/example/ExampleCareers/jobs",
+    "career_url": "https://example.wd5.myworkdayjobs.com/ExampleCareers"
+  },
+  "raw_payload": {
+    "title": "Software Engineer Intern",
+    "externalPath": "/job/Bengaluru-India/R123",
+    "locationsText": "Bengaluru, India",
+    "postedOn": "Posted 2 Days Ago",
+    "bulletFields": ["Internship"]
+  },
+  "expected_job": {
+    "schema_version": 1,
+    "company": "Example Workday",
+    "source": "workday",
+    "source_id": "/job/Bengaluru-India/R123",
+    "title": "Software Engineer Intern",
+    "location": "Bengaluru, India",
+    "locations": ["Bengaluru, India"],
+    "department": "",
+    "team": "",
+    "employment_type": "Internship",
+    "workplace_type": "",
+    "description": "Internship",
+    "updated_at": "",
+    "first_published": "2026-06-20T08:00:00+00:00",
+    "freshness_days": 14,
+    "url": "https://example.wd5.myworkdayjobs.com/ExampleCareers/job/Bengaluru-India/R123",
+    "apply_url": "https://example.wd5.myworkdayjobs.com/ExampleCareers/job/Bengaluru-India/R123"
+  }
+}

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Greenhouse Job Posting</title>
+</head>
+<body>
+  <form id="application_form">
+    <input type="text" id="first_name" name="job_application[first_name]">
+    <input type="text" id="last_name" name="job_application[last_name]">
+    <input type="email" id="email" name="job_application[email]">
+    <input type="text" id="phone" name="job_application[phone]">
+    
+    <div class="custom_question">
+      <label>LinkedIn Profile URL</label>
+      <input type="text" name="job_application[answers][123]">
+    </div>
+    
+    <div class="custom_question">
+      <label>GitHub or Portfolio URL</label>
+      <input type="text" name="job_application[answers][456]">
+    </div>
+    
+    <input type="file" name="job_application[resume]">
+    <input type="submit" value="Submit Application">
+  </form>
+</body>
+</html>

@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenClaw Multi-Agent Placement Pipeline | Demo Day</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: rgba(17, 24, 39, 0.75);
+      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --primary: #6366f1;
+      --primary-glow: rgba(99, 102, 241, 0.25);
+      --primary-hover: #4f46e5;
+      --accent: #14b8a6;
+      --accent-glow: rgba(20, 184, 166, 0.2);
+      --accent-hover: #0d9488;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dark: #0f172a;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(99, 102, 241, 0.4);
+      --success: #10b981;
+      --success-glow: rgba(16, 185, 129, 0.15);
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'Fira Code', monospace;
+      --radius: 12px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Floating glowing orbs background */
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      z-index: -1;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .orb-1 {
+      top: -100px;
+      left: 10%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, var(--primary) 0%, transparent 80%);
+    }
+
+    .orb-2 {
+      top: 500px;
+      right: 5%;
+      width: 350px;
+      height: 350px;
+      background: radial-gradient(circle, var(--accent) 0%, transparent 80%);
+    }
+
+    .orb-3 {
+      bottom: -100px;
+      left: 20%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, var(--primary) 0%, transparent 80%);
+    }
+
+    header {
+      padding: 3rem 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+      position: relative;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .header-badge .pulse {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); opacity: 0.5; }
+      50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px var(--accent); }
+      100% { transform: scale(0.9); opacity: 0.5; }
+    }
+
+    h1 {
+      font-family: var(--font-heading);
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1.2;
+      background: linear-gradient(135deg, #fff 30%, #a5b4fc 70%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.75rem;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 850px;
+      margin: 0 auto 2rem;
+      font-weight: 400;
+    }
+
+    .meta-strip {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .meta-item strong {
+      color: var(--text-main);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto 5rem;
+      padding: 0 1.5rem;
+    }
+
+    /* Tab Controls */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 2.5rem;
+      background: rgba(15, 23, 42, 0.4);
+      padding: 0.4rem;
+      border-radius: 9999px;
+      border: 1px solid var(--border);
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      backdrop-filter: blur(10px);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.75rem 1.25rem;
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: var(--transition);
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab-btn.active {
+      color: var(--text-main);
+      background: var(--primary);
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    /* Tab Content panels */
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards & Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      backdrop-filter: blur(12px);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      background-color: var(--bg-card-hover);
+      border-color: rgba(99, 102, 241, 0.2);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 15px var(--primary-glow);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card-title {
+      font-family: var(--font-heading);
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: #fff;
+    }
+
+    .card-title svg {
+      width: 24px;
+      height: 24px;
+      color: var(--accent);
+    }
+
+    .card-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+    }
+
+    .highlight-box {
+      background: rgba(99, 102, 241, 0.05);
+      border-left: 4px solid var(--primary);
+      padding: 1.25rem;
+      border-radius: 0 var(--radius) var(--radius) 0;
+      margin: 1.5rem 0;
+    }
+
+    .highlight-box p {
+      font-size: 0.95rem;
+      color: #e2e8f0;
+      margin: 0;
+    }
+
+    /* List items styling */
+    ul.check-list, ul.bullet-list {
+      list-style-type: none;
+      margin-top: 1rem;
+    }
+
+    ul.check-list li {
+      position: relative;
+      padding-left: 2rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.95rem;
+    }
+
+    ul.check-list li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--accent);
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    ul.bullet-list li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    ul.bullet-list li strong {
+      color: var(--text-main);
+    }
+
+    ul.bullet-list li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--primary);
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    /* Interactive Telegram Chat Simulator */
+    .telegram-simulator {
+      background: #0d121f;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      height: 550px;
+    }
+
+    .tg-header {
+      background: #17212b;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #101921;
+    }
+
+    .tg-header-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .tg-avatar {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #6366f1, #14b8a6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .tg-chat-details h4 {
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .tg-chat-details span {
+      color: #708190;
+      font-size: 0.8rem;
+    }
+
+    .tg-chat-actions {
+      display: flex;
+      gap: 1rem;
+      color: #708190;
+    }
+
+    .tg-body {
+      flex: 1;
+      background: #0e1621;
+      background-image: radial-gradient(#17212b 1px, transparent 0);
+      background-size: 20px 20px;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .tg-message-group {
+      display: flex;
+      flex-direction: column;
+      max-width: 75%;
+    }
+
+    .tg-message-group.incoming {
+      align-self: flex-start;
+    }
+
+    .tg-message-group.outgoing {
+      align-self: flex-end;
+    }
+
+    .tg-sender-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      margin-left: 0.5rem;
+    }
+
+    .tg-message-group.incoming .tg-sender-name {
+      color: #5288c1;
+    }
+
+    .tg-message-group.outgoing .tg-sender-name {
+      color: #53b379;
+      text-align: right;
+      margin-right: 0.5rem;
+    }
+
+    .tg-bubble {
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      position: relative;
+      font-size: 0.92rem;
+      word-break: break-word;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .tg-message-group.incoming .tg-bubble {
+      background: #182533;
+      color: #f5f5f5;
+      border-top-left-radius: 2px;
+    }
+
+    .tg-message-group.outgoing .tg-bubble {
+      background: #2b5278;
+      color: #fff;
+      border-top-right-radius: 2px;
+    }
+
+    .tg-time {
+      display: block;
+      font-size: 0.72rem;
+      color: rgba(255, 255, 255, 0.4);
+      margin-top: 0.25rem;
+      text-align: right;
+    }
+
+    .tg-message-group.incoming .tg-time {
+      color: #6c7883;
+    }
+
+    .tg-message-group.outgoing .tg-time {
+      color: #6a95c0;
+    }
+
+    .tg-footer {
+      background: #17212b;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-top: 1px solid #101921;
+    }
+
+    .tg-input-sim {
+      flex: 1;
+      background: #24303f;
+      border: 1px solid #2f3e53;
+      border-radius: 9999px;
+      padding: 0.6rem 1.2rem;
+      color: var(--text-main);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tg-input-sim span {
+      color: #708190;
+    }
+
+    .tg-btn-send {
+      width: 36px;
+      height: 36px;
+      background: #5288c1;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .chat-selector {
+      display: flex;
+      background: #17212b;
+      border-bottom: 1px solid #101921;
+      padding: 0.25rem;
+    }
+
+    .chat-tab {
+      flex: 1;
+      text-align: center;
+      padding: 0.5rem;
+      font-size: 0.85rem;
+      color: #708190;
+      cursor: pointer;
+      border-radius: 4px;
+      font-weight: 500;
+      transition: var(--transition);
+    }
+
+    .chat-tab.active {
+      background: #2b5278;
+      color: #fff;
+    }
+
+    /* ATS Scanner Console Simulator */
+    .console-wrapper {
+      background: #020617;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .console-header {
+      background: #0f172a;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .console-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .console-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background-color: var(--error); }
+    .dot-yellow { background-color: var(--warning); }
+    .dot-green { background-color: var(--success); }
+
+    .console-title {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+
+    .console-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: var(--transition);
+    }
+
+    .console-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .console-btn:disabled {
+      background: rgba(99, 102, 241, 0.4);
+      cursor: not-allowed;
+    }
+
+    .console-body {
+      padding: 1.5rem;
+      height: 350px;
+      overflow-y: auto;
+      color: #38bdf8;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .console-line {
+      line-height: 1.5;
+    }
+
+    .console-line.cmd { color: #f8fafc; }
+    .console-line.info { color: #38bdf8; }
+    .console-line.success { color: var(--success); }
+    .console-line.warn { color: var(--warning); }
+    .console-line.err { color: var(--error); }
+
+    .console-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: #0f172a;
+      border-top: 1px solid var(--border);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-box {
+      border-right: 1px solid var(--border);
+    }
+
+    .stat-box:last-child {
+      border-right: none;
+    }
+
+    .stat-num {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: var(--font-heading);
+      color: #fff;
+    }
+
+    .stat-num.success-txt { color: var(--accent); }
+    .stat-num.warning-txt { color: var(--warning); }
+
+    .stat-lbl {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.25rem;
+    }
+
+    /* Matches Container */
+    .scan-matches-container {
+      margin-top: 2rem;
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .scan-matches-container.visible {
+      display: block;
+    }
+
+    .match-job-card {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(20, 184, 166, 0.05) 100%);
+      border: 1px dashed rgba(20, 184, 166, 0.3);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      transition: var(--transition);
+    }
+
+    .match-job-card:hover {
+      border-style: solid;
+      border-color: var(--accent);
+      box-shadow: 0 0 15px rgba(20, 184, 166, 0.15);
+      transform: scale(1.01);
+    }
+
+    .match-job-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .job-company {
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .job-title {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .job-meta-row {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .job-meta-row span {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .match-job-right .apply-btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      color: #fff;
+      text-decoration: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+      transition: var(--transition);
+    }
+
+    .match-job-right .apply-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Architecture Flow Diagram */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 24px 1fr 24px 1fr;
+      align-items: center;
+      margin: 2rem 0;
+    }
+
+    .arch-step-box {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .arch-step-box:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .arch-step-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .arch-step-title {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+      font-size: 1.05rem;
+    }
+
+    .arch-step-body {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .arch-arrow {
+      color: var(--primary);
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    /* Timeline / Roadmap */
+    .roadmap-timeline {
+      position: relative;
+      padding-left: 2.5rem;
+      margin: 2rem 0;
+    }
+
+    .roadmap-timeline::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--border);
+    }
+
+    .roadmap-item {
+      position: relative;
+      margin-bottom: 2.5rem;
+    }
+
+    .roadmap-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .roadmap-marker {
+      position: absolute;
+      left: -40px;
+      top: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--bg-dark);
+      border: 3px solid var(--border);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .roadmap-item.done .roadmap-marker {
+      border-color: var(--accent);
+      background-color: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    .roadmap-item.active .roadmap-marker {
+      border-color: var(--primary);
+      background-color: var(--primary);
+      box-shadow: 0 0 8px var(--primary);
+      animation: pulse-marker 2s infinite;
+    }
+
+    @keyframes pulse-marker {
+      0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+    }
+
+    .roadmap-content {
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .roadmap-item.done .roadmap-content {
+      border-color: rgba(20, 184, 166, 0.15);
+    }
+
+    .roadmap-item.active .roadmap-content {
+      border-color: rgba(99, 102, 241, 0.3);
+      background: rgba(99, 102, 241, 0.03);
+    }
+
+    .roadmap-title-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .roadmap-title {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      color: #fff;
+      font-size: 1.1rem;
+    }
+
+    .roadmap-status {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .roadmap-item.done .roadmap-status {
+      background: rgba(20, 184, 166, 0.1);
+      color: #2dd4bf;
+    }
+
+    .roadmap-item.active .roadmap-status {
+      background: rgba(99, 102, 241, 0.1);
+      color: #a5b4fc;
+    }
+
+    .roadmap-item.todo .roadmap-status {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+    }
+
+    .roadmap-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* Print / PDF view button */
+    .floating-actions {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      gap: 1rem;
+      z-index: 100;
+    }
+
+    .action-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: none;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+      transition: var(--transition);
+    }
+
+    .action-btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(99, 102, 241, 0.6);
+      background: var(--primary-hover);
+    }
+
+    .action-tooltip {
+      position: absolute;
+      bottom: 60px;
+      right: 0;
+      background: var(--text-dark);
+      color: #fff;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .action-btn:hover .action-tooltip {
+      opacity: 1;
+    }
+
+    /* Job Category Matrix table */
+    .category-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .category-table th, .category-table td {
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+
+    .category-table th {
+      background: rgba(15, 23, 42, 0.6);
+      font-family: var(--font-heading);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .category-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .time-badge {
+      display: inline-block;
+      background: rgba(20, 184, 166, 0.1);
+      color: var(--accent);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      h1 { font-size: 2.2rem; }
+      .tabs { flex-direction: column; border-radius: var(--radius); padding: 0.75rem; }
+      .tab-btn { justify-content: center; }
+      .arch-grid { grid-template-columns: 1fr; gap: 1rem; }
+      .arch-arrow { transform: rotate(90deg); margin: 0.5rem 0; }
+      .telegram-simulator { height: 480px; }
+      .console-stats { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+      .stat-box { border-right: none; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+      .stat-box:nth-child(n+3) { border-bottom: none; padding-bottom: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Background Orbs -->
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+
+  <!-- Header Section -->
+  <header>
+    <div class="header-badge">
+      <span class="pulse"></span> OpenClaw System Active
+    </div>
+    <h1>OpenClaw Placement Agent: Chota Chattri</h1>
+    <div class="subtitle">A modular, Multi-Agent Job Discovery & Application Pipeline running specialized industry category-scans and user-personalized broadcasts on Telegram.</div>
+    
+    <div class="meta-strip">
+      <div class="meta-item">Developers: <strong>Bhawani & Jaskirat</strong></div>
+      <div class="meta-item">Framework: <strong>OpenClaw CLI Agent Core</strong></div>
+      <div class="meta-item">Active Channels: <strong>Telegram DM & Broadcasts</strong></div>
+      <div class="meta-item">Architecture: <strong>Multi-Agent, Category-Slices</strong></div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="container">
+
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(event, 'tab-overview')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        Overview & Agents
+      </button>
+      <button class="tab-btn" onclick="switchTab(event, 'tab-cron')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        Cron Pipeline
+      </button>
+      <button class="tab-btn" onclick="switchTab(event, 'tab-scanner')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+        API Scanner Sim
+      </button>
+      <button class="tab-btn" onclick="switchTab(event, 'tab-chat')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        Bot Simulator
+      </button>
+      <button class="tab-btn" onclick="switchTab(event, 'tab-learnings')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        Insights & Roadmap
+      </button>
+    </div>
+
+    <!-- TAB 1: OVERVIEW & ARCHITECTURE -->
+    <div id="tab-overview" class="tab-content active">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            The Problem
+          </div>
+          <p class="card-desc">Finding high-quality early-career software/tech roles is manual, rate-limited, and context-polluted. Combining multiple searches into one monolithic run triggers high LLM token costs and frequent rate-limiting failures.</p>
+          <ul class="bullet-list">
+            <li><strong>Monolithic Failures:</strong> Scanners that crawl all sites at once hit timeout limits and Cloudflare challenges.</li>
+            <li><strong>Context Pollution:</strong> Merging AI companies, Web3, services, and big-tech watchlists creates noisy, untargeted shortlists.</li>
+            <li><strong>Deduplication Drag:</strong> Incrementally scanning without local state checkpoints leads to repeat recommendations.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 17 22 12"></polyline></svg>
+            The Multi-Agent Pipeline
+          </div>
+          <p class="card-desc">We split the project into **two collaborative agents** and **category-specific slices** executing on staggered schedules:</p>
+          <ul class="bullet-list">
+            <li><strong>Agent `main` ("Chota Chattri"):</strong> Handles daily group broadcasts, social posting workflows, general watchlists, and manual application assists.</li>
+            <li><strong>Agent `jaskirat`:</strong> Orchestrates 9 highly focused industry category crawls (Services, AI, Cyber, Web3/Fintech) keeping data separated in local databases.</li>
+            <li><strong>Personalization Digest Engine:</strong> Processes candidate preferences privately in DM, mapping aggregated daily scans against individual profiles.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          Collaborative Pipeline Architecture
+        </div>
+        
+        <div class="arch-grid">
+          <div class="arch-step-box">
+            <div class="arch-step-icon">🔌</div>
+            <div class="arch-step-title">1. Category API Slices</div>
+            <div class="arch-step-body">Agent `jaskirat` crawls Greenhouse/Lever API boards hourly by sector (AI, Cyber, Web3).</div>
+          </div>
+          <div class="arch-arrow">➔</div>
+          <div class="arch-step-box">
+            <div class="arch-step-icon">🧠</div>
+            <div class="arch-step-title">2. GPT Classification</div>
+            <div class="arch-step-body">GPT filters out senior/stale roles and writes category files (e.g. `/memory/job_scans/services.md`).</div>
+          </div>
+          <div class="arch-arrow">➔</div>
+          <div class="arch-step-box">
+            <div class="arch-step-icon">👥</div>
+            <div class="arch-step-title">3. Personalized Delivery</div>
+            <div class="arch-step-body">Agent `main` broadcasts general shortlists to group, while private matches are DMed to candidates.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: CRON PIPELINE BREAKDOWN -->
+    <div id="tab-cron" class="tab-content">
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          Active Cron Schedule (OpenClaw Scheduler)
+        </div>
+        <p class="card-desc">Here is the active pipeline of cron jobs running in your OpenClaw framework instance:</p>
+        
+        <table class="category-table">
+          <thead>
+            <tr>
+              <th>Agent</th>
+              <th>Task Name</th>
+              <th>Trigger Time (IST)</th>
+              <th>Output Target</th>
+              <th>Scope / Watchlist</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>jaskirat</code></td>
+              <td><strong>jaskirat-jobs-services-career-pages</strong></td>
+              <td><span class="time-badge">06:30 AM</span></td>
+              <td><code>memory/job_scans/services.md</code></td>
+              <td>Accenture, Capgemini, Cognizant, LTIMindtree, Persistent...</td>
+            </tr>
+            <tr>
+              <td><code>jaskirat</code></td>
+              <td><strong>jaskirat-jobs-data-cloud-devtools</strong></td>
+              <td><span class="time-badge">07:00 AM</span></td>
+              <td><code>memory/job_scans/data-cloud-devtools.md</code></td>
+              <td>Databricks, Snowflake, MongoDB, Elastic, GitLab, Vercel...</td>
+            </tr>
+            <tr>
+              <td><code>jaskirat</code></td>
+              <td><strong>jaskirat-jobs-ai-companies</strong></td>
+              <td><span class="time-badge">07:30 AM</span></td>
+              <td><code>memory/job_scans/ai-companies.md</code></td>
+              <td>OpenAI, Anthropic, Cohere, Mistral AI, Hugging Face, Scale AI...</td>
+            </tr>
+            <tr>
+              <td><code>jaskirat</code></td>
+              <td><strong>jaskirat-jobs-cybersecurity</strong></td>
+              <td><span class="time-badge">08:00 AM</span></td>
+              <td><code>memory/job_scans/cybersecurity.md</code></td>
+              <td>CrowdStrike, Palo Alto Networks, Zscaler, Cloudflare, Rubrik...</td>
+            </tr>
+            <tr>
+              <td><code>main</code></td>
+              <td><strong>daily-ai-web3-brief-telegram</strong></td>
+              <td><span class="time-badge">08:00 AM</span></td>
+              <td>Telegram DM (Bhawani)</td>
+              <td>Notable AI and Web3 news briefs (max 2 web searches)</td>
+            </tr>
+            <tr>
+              <td><code>main</code></td>
+              <td><strong>hardcore-placements-daily-company-check</strong></td>
+              <td><span class="time-badge">08:00 AM</span></td>
+              <td>Telegram Group Broadcast</td>
+              <td>Greenhouse board watchlist crawler (fetch_jobs_ats.py)</td>
+            </tr>
+            <tr>
+              <td><code>jaskirat</code></td>
+              <td><strong>jaskirat-jobs-gaming-media</strong></td>
+              <td><span class="time-badge">08:30 AM</span></td>
+              <td><code>memory/job_scans/gaming-media.md</code></td>
+              <td>Gameplay, tools engineering, creator platforms, studio tech...</td>
+            </tr>
+            <tr>
+              <td><code>jaskirat</code></td>
+              <td><strong>jaskirat-jobs-web3-fintech</strong></td>
+              <td><span class="time-badge">09:00 AM</span></td>
+              <td><code>memory/job_scans/web3-fintech.md</code></td>
+              <td>Coinbase, Razorpay, PhonePe, Groww, Stripe, Brex, Mercury...</td>
+            </tr>
+            <tr>
+              <td><code>jaskirat</code></td>
+              <td><strong>jaskirat-jobs-general-product-hardware</strong></td>
+              <td><span class="time-badge">09:30 AM</span></td>
+              <td><code>memory/job_scans/product-hardware.md</code></td>
+              <td>Microsoft, Google, Apple, Amazon, Meta, NVIDIA, Oracle...</td>
+            </tr>
+            <tr>
+              <td><code>jaskirat</code></td>
+              <td><strong>jaskirat-jobs-ats-api-greenhouse-lever</strong></td>
+              <td><span class="time-badge">10:00 AM</span></td>
+              <td><code>memory/job_scans/ats-api.md</code></td>
+              <td>Greenhouse + Lever boards crawlers automation</td>
+            </tr>
+            <tr>
+              <td><code>main</code></td>
+              <td><strong>hardcore-placements-it-platform-jobs</strong></td>
+              <td><span class="time-badge">02:00 PM</span></td>
+              <td>Telegram Group Broadcast</td>
+              <td>Wellfound, Cutshort public platform crawls</td>
+            </tr>
+            <tr>
+              <td><code>jaskirat</code></td>
+              <td><strong>jaskirat-jobs-public-platforms</strong></td>
+              <td><span class="time-badge">02:00 PM</span></td>
+              <td><code>memory/job_scans/public-platforms.md</code></td>
+              <td>Cutshort, Wellfound, Naukri public search snippets</td>
+            </tr>
+            <tr>
+              <td><code>jaskirat</code></td>
+              <td><strong>jaskirat-jobs-user-personal-preferences</strong></td>
+              <td><span class="time-badge">07:00 PM</span></td>
+              <td>Telegram DM (Private Candidates)</td>
+              <td>Matches scans from all slices against candidate preferences</td>
+            </tr>
+            <tr>
+              <td><code>main</code></td>
+              <td><strong>daily-tweet-from-telegram-notes</strong></td>
+              <td><span class="time-badge">09:30 PM</span></td>
+              <td>Draft / X Twitter Post</td>
+              <td>Reads daily Telegram learning note, rewrites, and posts draft</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: GREENHOUSE API SCANNER SIMULATOR -->
+    <div id="tab-scanner" class="tab-content">
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 16 17 20 11"></polyline><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect></svg>
+          Greenhouse Board API Scanner (`fetch_jobs_ats.py`)
+        </div>
+        <p class="card-desc">Simulate the execution of the Greenhouse boards scanner crawling watchlists, processing job postings, and filtering based on user preferences.</p>
+        
+        <!-- Console Window -->
+        <div class="console-wrapper">
+          <div class="console-header">
+            <div class="console-dots">
+              <div class="console-dot dot-red"></div>
+              <div class="console-dot dot-yellow"></div>
+              <div class="console-dot dot-green"></div>
+            </div>
+            <div class="console-title">fetch_jobs_ats.py</div>
+            <button id="run-scan-btn" class="console-btn" onclick="startScannerSim()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              Run Job Scan
+            </button>
+          </div>
+          <div id="console-output" class="console-body">
+            <div class="console-line cmd">bhawani-singh@openclaw-node:~$ python3 -m scripts.fetch_jobs_ats</div>
+            <div class="console-line info">[SYS] Initializing Greenhouse ATS API Scanner...</div>
+            <div class="console-line info">[SYS] Target criteria: Role(Software Developer/Intern), Location(India/Remote), Experience(fresher/0-2 YOE)</div>
+            <div class="console-line info">[SYS] Loading company watchlists from data/ats_api_sources.json...</div>
+            <div class="console-line success">[SYS] Loaded 27 active Greenhouse slugs & 8 Lever slugs.</div>
+            <div class="console-line cmd">bhawani-singh@openclaw-node:~$ _ (Click "Run Job Scan" to start)</div>
+          </div>
+          <div class="console-stats">
+            <div class="stat-box">
+              <div id="stat-scanned" class="stat-num">0</div>
+              <div class="stat-lbl">Boards Checked</div>
+            </div>
+            <div class="stat-box">
+              <div id="stat-total" class="stat-num">0</div>
+              <div class="stat-lbl">Jobs Crawled</div>
+            </div>
+            <div class="stat-box">
+              <div id="stat-recent" class="stat-num">0</div>
+              <div class="stat-lbl">Recent (14d)</div>
+            </div>
+            <div class="stat-box">
+              <div id="stat-matches" class="stat-num success-txt">0</div>
+              <div class="stat-lbl">Matches Found</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Matches Output -->
+        <div id="scan-matches" class="scan-matches-container">
+          <h3 style="font-family: var(--font-heading); margin-bottom: 1rem; color: #fff;">Processed scan results:</h3>
+          
+          <div class="match-job-card">
+            <div class="match-job-left">
+              <div class="job-company">Rubrik</div>
+              <div class="job-title">Application Security Intern</div>
+              <div class="job-meta-row">
+                <span>📍 Bangalore, India</span>
+                <span>📅 Published: June 2, 2026</span>
+                <span>⚡ Score: 96% Match (Cybersecurity Slice)</span>
+              </div>
+            </div>
+            <div class="match-job-right">
+              <a href="https://www.rubrik.com/company/careers/departments/job.7928163?gh_jid=7928163" target="_blank" class="apply-btn">
+                Apply Link
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              </a>
+            </div>
+          </div>
+
+          <div class="match-job-card">
+            <div class="match-job-left">
+              <div class="job-company">Elastic</div>
+              <div class="job-title">Cloud Billing Associate</div>
+              <div class="job-meta-row">
+                <span>📍 Bangalore, India</span>
+                <span>📅 Published: June 11, 2026</span>
+                <span>⚡ Score: 90% Match (Data/Cloud/Devtools Slice)</span>
+              </div>
+            </div>
+            <div class="match-job-right">
+              <a href="https://jobs.elastic.co/jobs?gh_jid=7991494&gh_jid=7991494" target="_blank" class="apply-btn">
+                Apply Link
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 4: CHOTA CHATTRI BOT TELEGRAM SIMULATOR -->
+    <div id="tab-chat" class="tab-content">
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          Chota Chattri bot Telegram Chat Simulator
+        </div>
+        <p class="card-desc">Select a simulation scenario to see how Chota Chattri interacts with placement candidates in DMs or broadcasts job reports to the Telegram group.</p>
+        
+        <div class="chat-selector">
+          <div id="chat-tab-dm" class="chat-tab active" onclick="switchChatScenario('dm')">Onboarding & Application DM</div>
+          <div id="chat-tab-group" class="chat-tab" onclick="switchChatScenario('group')">"hardcore placements" Broadcast</div>
+        </div>
+
+        <div class="telegram-simulator">
+          <div class="tg-header">
+            <div class="tg-header-info">
+              <div id="tg-avatar-label" class="tg-avatar">CC</div>
+              <div class="tg-chat-details">
+                <h4 id="tg-chat-title">Chota Chattri (OpenClaw Agent)</h4>
+                <span id="tg-chat-status">bot • online</span>
+              </div>
+            </div>
+            <div class="tg-chat-actions">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+            </div>
+          </div>
+          
+          <div id="tg-chat-body" class="tg-body">
+            <!-- Simulated messages will go here -->
+          </div>
+
+          <div class="tg-footer">
+            <div class="tg-input-sim">
+              <span>Write a message...</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            </div>
+            <button class="tg-btn-send">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(45deg); margin-left:-2px; margin-top:2px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: KEY LEARNINGS & ROADMAP -->
+    <div id="tab-learnings" class="tab-content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+            Key learnings & Insights
+          </div>
+          <p class="card-desc">Valuable discoveries from building a collaborative multi-agent pipeline:</p>
+          <ul class="bullet-list">
+            <li><strong>Task Segmentation (Sector Slices) solves context bottlenecks:</strong> Splitting scans into discrete categories (Services, Web3, Cyber) reduces context lengths, prevents token usage spikes, and prevents multi-company crawl timeouts.</li>
+            <li><strong>Incremental Deduplication via Checkpoints:</strong> Daily crawlers generate massive redundant data. Writing daily Markdown memory logs (`checkpoint_*.md`) allows the agent to check and exclude duplicates prior to LLM evaluation.</li>
+            <li><strong>Multi-Agent Isolation for Privacy:</strong> Storing candidates' preferences privately in `job_users.json` and generating individual DMs prevents profile leakages in public group channels.</li>
+            <li><strong>X / Twitter Social Post Loop:</strong> Pulling the newest Telegram notes, translating, rewriting under 280 chars, and auto-publishing drafts is an excellent loop to build developer public presence.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Timeline & Roadmap
+          </div>
+          <div class="roadmap-timeline">
+            <div class="roadmap-item done">
+              <div class="roadmap-marker"></div>
+              <div class="roadmap-content">
+                <div class="roadmap-title-row">
+                  <span class="roadmap-title">Modular Slices & Category Logs</span>
+                  <span class="roadmap-status">Done</span>
+                </div>
+                <div class="roadmap-desc">Developed Greenhouse ATS scanner, daily category slices, and checkpoint state logs.</div>
+              </div>
+            </div>
+
+            <div class="roadmap-item done">
+              <div class="roadmap-marker"></div>
+              <div class="roadmap-content">
+                <div class="roadmap-title-row">
+                  <span class="roadmap-title">Multi-Agent Split (main & jaskirat)</span>
+                  <span class="roadmap-status">Done</span>
+                </div>
+                <div class="roadmap-desc">Configured agent `main` (briefs, broadcasts) and agent `jaskirat` (staggered sector crawls, personal preferences).</div>
+              </div>
+            </div>
+
+            <div class="roadmap-item active">
+              <div class="roadmap-marker"></div>
+              <div class="roadmap-content">
+                <div class="roadmap-title-row">
+                  <span class="roadmap-title">Lever Board API Scraper</span>
+                  <span class="roadmap-status">In Progress</span>
+                </div>
+                <div class="roadmap-desc">Adding direct API board crawling for Lever targets already mapped in career_page_sources.json.</div>
+              </div>
+            </div>
+
+            <div class="roadmap-item todo">
+              <div class="roadmap-marker"></div>
+              <div class="roadmap-content">
+                <div class="roadmap-title-row">
+                  <span class="roadmap-title">Browser Session Sharing</span>
+                  <span class="roadmap-status">Planned</span>
+                </div>
+                <div class="roadmap-desc">Integrating cookies/session sharing to automatically complete applications by bypassing bot challenges.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Floating Print Action Button -->
+  <div class="floating-actions">
+    <button class="action-btn" onclick="window.print()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+      <div class="action-tooltip">Print / Save PDF</div>
+    </button>
+  </div>
+
+  <script>
+    // Tab switching logic
+    function switchTab(evt, tabId) {
+      const tabContents = document.getElementsByClassName('tab-content');
+      for (let i = 0; i < tabContents.length; i++) {
+        tabContents[i].classList.remove('active');
+      }
+
+      const tabBtns = document.getElementsByClassName('tab-btn');
+      for (let i = 0; i < tabBtns.length; i++) {
+        tabBtns[i].classList.remove('active');
+      }
+
+      document.getElementById(tabId).classList.add('active');
+      evt.currentTarget.classList.add('active');
+
+      // If switching to chat tab, load the active scenario
+      if (tabId === 'tab-chat') {
+        const activeChatTab = document.querySelector('.chat-tab.active');
+        const scenario = activeChatTab.id === 'chat-tab-dm' ? 'dm' : 'group';
+        loadChatScenario(scenario);
+      }
+    }
+
+    // Greenhouse Scanner Simulator logic
+    let scannerRunning = false;
+    function startScannerSim() {
+      if (scannerRunning) return;
+      scannerRunning = true;
+      
+      const btn = document.getElementById('run-scan-btn');
+      const consoleBox = document.getElementById('console-output');
+      const matchesBox = document.getElementById('scan-matches');
+      
+      const statScanned = document.getElementById('stat-scanned');
+      const statTotal = document.getElementById('stat-total');
+      const statRecent = document.getElementById('stat-recent');
+      const statMatches = document.getElementById('stat-matches');
+
+      // Reset
+      btn.disabled = true;
+      matchesBox.classList.remove('visible');
+      consoleBox.innerHTML = '<div class="console-line cmd">bhawani-singh@openclaw-node:~$ python3 -m scripts.fetch_jobs_ats</div>';
+      statScanned.innerText = '0';
+      statTotal.innerText = '0';
+      statRecent.innerText = '0';
+      statMatches.innerText = '0';
+
+      const logs = [
+        { text: "[SYS] Initializing Greenhouse ATS API Scanner...", type: "info" },
+        { text: "[SYS] Target criteria: Software engineering & tech roles, India or globally remote, YOE 0-2.", type: "info" },
+        { text: "[SYS] Reading config and company board slugs...", type: "info" },
+        { text: "[SCAN] Crawling Airbnb board (slug: airbnb) API endpoint...", type: "info" },
+        { text: "[SCAN] Checked Airbnb: 220 total jobs, 34 published within 14 days. Matches: 0", type: "warn", stats: {scanned:1, total:220, recent:34, matches:0} },
+        { text: "[SCAN] Crawling Anthropic board (slug: anthropic) API endpoint...", type: "info" },
+        { text: "[SCAN] Checked Anthropic: 381 total jobs, 79 published within 14 days. Matches: 0", type: "warn", stats: {scanned:2, total:601, recent:113, matches:0} },
+        { text: "[SCAN] Crawling Elastic board (slug: elastic) API endpoint...", type: "info" },
+        { text: "[SCAN] Checked Elastic: 193 total jobs, 62 published within 14 days.", type: "info" },
+        { text: "[EVAL] Found potential match: 'Cloud Billing Associate' in Bangalore, India.", type: "success" },
+        { text: "[EVAL] Matches criteria: early-career YOE/associate tag, India based, tech profile. Saved to shortlist.", type: "success", stats: {scanned:3, total:794, recent:175, matches:1} },
+        { text: "[SCAN] Crawling Vercel board (slug: vercel) API endpoint...", type: "info" },
+        { text: "[SCAN] Checked Vercel: 72 total jobs, 8 published within 14 days. Matches: 0", type: "warn", stats: {scanned:4, total:866, recent:183, matches:1} },
+        { text: "[SCAN] Crawling Rubrik board (slug: rubrik) API endpoint...", type: "info" },
+        { text: "[SCAN] Checked Rubrik: 101 total jobs, 12 published within 14 days.", type: "info" },
+        { text: "[EVAL] Found potential match: 'Application Security Intern' in Bangalore.", type: "success" },
+        { text: "[EVAL] Matches criteria: internship role, Bangalore based, software/security profile. Saved to shortlist.", type: "success", stats: {scanned:5, total:967, recent:195, matches:2} },
+        { text: "[SCAN] Scanned remaining 22 watchlists in background... (Stripe, Databricks, Figma, Scale AI, etc.)", type: "info" },
+        { text: "[SCAN] Final results parsed successfully.", type: "success", stats: {scanned:27, total:6279, recent:1110, matches:2} },
+        { text: "[SYS] Deduplicating against memory/checkpoint_4beef526.md...", type: "info" },
+        { text: "[SYS] Output stored at memory/job_api_scan_latest.json & memory/job_api_scan_latest.md", type: "success" },
+        { text: "[SYS] Completed. 2 verified matches found.", type: "success" }
+      ];
+
+      let idx = 0;
+      function printNextLine() {
+        if (idx < logs.length) {
+          const log = logs[idx];
+          const div = document.createElement('div');
+          div.className = `console-line ${log.type}`;
+          div.innerText = log.text;
+          consoleBox.appendChild(div);
+          consoleBox.scrollTop = consoleBox.scrollHeight;
+
+          if (log.stats) {
+            statScanned.innerText = log.stats.scanned;
+            statTotal.innerText = log.stats.total;
+            statRecent.innerText = log.stats.recent;
+            statMatches.innerText = log.stats.matches;
+          }
+
+          idx++;
+          setTimeout(printNextLine, 350 + Math.random()*200);
+        } else {
+          // Finished
+          btn.disabled = false;
+          scannerRunning = false;
+          matchesBox.classList.add('visible');
+          
+          const endDiv = document.createElement('div');
+          endDiv.className = 'console-line cmd';
+          endDiv.innerText = 'bhawani-singh@openclaw-node:~$ _';
+          consoleBox.appendChild(endDiv);
+          consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+      }
+
+      setTimeout(printNextLine, 500);
+    }
+
+    // Telegram Simulator Scenario switching
+    let activeScenario = 'dm';
+    const dmHistory = [
+      { sender: "Jatin Singh Shekhawat", text: "Hey bot, can you check if there are any jobs matching my profile at Beroe Inc?", time: "02:14 PM", incoming: true },
+      { sender: "Chota Chattri", text: "Yo Jatin! Let me dig into that for you. Beroe Inc has a 'Full-Stack AI Engineer' role open! It looks like a solid fit.", time: "02:15 PM", incoming: false },
+      { sender: "Jatin Singh Shekhawat", text: "Awesome! Can you apply to this job on my behalf?", time: "02:16 PM", incoming: true },
+      { sender: "Chota Chattri", text: "I can definitely help kickstart the application process for you! But since Cutshort has safety checks, I'll need some details to set up the draft. Can you send me:\n1. Your full name & email\n2. Contact number\n3. Resume PDF\n4. GitHub / LinkedIn / Portfolio links\n\nOnce you share, I'll compile the profile, prep the apply script, and let you know when to take over for the final captcha verification step! 🚀", time: "02:17 PM", incoming: false },
+      { sender: "Jatin Singh Shekhawat", text: "Sure, here's my LinkedIn: linkedin.com/in/jatinbanna. I will send my resume PDF shortly.", time: "02:19 PM", incoming: true },
+      { sender: "Chota Chattri", text: "Perfect! Stashed your LinkedIn. Standing by for the resume PDF, and then we'll get that draft prepped. Let's get this placement sorted! 💪", time: "02:20 PM", incoming: false }
+    ];
+
+    const groupHistory = [
+      { sender: "Chota Chattri", text: "⚡ **DAILY JOB BROADCAST: GREENHOUSE WATCHLIST SCAN** ⚡\n\nHey hardcore placements crew! Here are today's fresh, early-career software development and tech opportunities fetched directly from our monitored company boards:\n\n1️⃣ **Rubrik**\n🔹 Title: Application Security Intern\n📍 Location: Bangalore, India\n🔗 Link: https://www.rubrik.com/company/careers/departments/job.7928163?gh_jid=7928163\n\n2️⃣ **Elastic**\n🔹 Title: Cloud Billing Associate\n📍 Location: Bangalore, India\n🔗 Link: https://jobs.elastic.co/jobs?gh_jid=7991494&gh_jid=7991494\n\n_All roles have been verified for freshness (published within 14 days) and filtered to match early-career levels (0-2 YOE). Direct-message me to onboard your profile or request application drafts!_", time: "08:00 AM", incoming: false },
+      { sender: "Jatin Singh Shekhawat", text: "Rubrik intern looks interesting. Thanks bot!", time: "08:15 AM", incoming: true },
+      { sender: "Bhawani Singh", text: "Elastic role is a good fit for cloud/billing stacks. Apply flow is straightforward.", time: "08:18 AM", incoming: true }
+    ];
+
+    function switchChatScenario(scenario) {
+      if (activeScenario === scenario) return;
+      
+      const tabDm = document.getElementById('chat-tab-dm');
+      const tabGroup = document.getElementById('chat-tab-group');
+      
+      if (scenario === 'dm') {
+        tabDm.classList.add('active');
+        tabGroup.classList.remove('active');
+      } else {
+        tabGroup.classList.add('active');
+        tabDm.classList.remove('active');
+      }
+      
+      activeScenario = scenario;
+      loadChatScenario(scenario);
+    }
+
+    function loadChatScenario(scenario) {
+      const body = document.getElementById('tg-chat-body');
+      const title = document.getElementById('tg-chat-title');
+      const avatarLabel = document.getElementById('tg-avatar-label');
+      
+      body.innerHTML = '';
+      
+      if (scenario === 'dm') {
+        title.innerText = "Chota Chattri (OpenClaw Agent)";
+        avatarLabel.innerText = "CC";
+        
+        dmHistory.forEach(msg => {
+          appendSimulatedMessage(body, msg);
+        });
+      } else {
+        title.innerText = "hardcore placements";
+        avatarLabel.innerText = "HP";
+        
+        groupHistory.forEach(msg => {
+          appendSimulatedMessage(body, msg);
+        });
+      }
+      
+      body.scrollTop = body.scrollHeight;
+    }
+
+    function appendSimulatedMessage(container, msg) {
+      const groupDiv = document.createElement('div');
+      groupDiv.className = `tg-message-group ${msg.incoming ? 'incoming' : 'outgoing'}`;
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'tg-sender-name';
+      nameSpan.innerText = msg.sender;
+      
+      const bubbleDiv = document.createElement('div');
+      bubbleDiv.className = 'tg-bubble';
+      
+      // Formatting linebreaks in bubble content
+      bubbleDiv.innerHTML = msg.text.replace(/\n/g, '<br>');
+      
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'tg-time';
+      timeSpan.innerText = msg.time;
+      
+      bubbleDiv.appendChild(timeSpan);
+      groupDiv.appendChild(nameSpan);
+      groupDiv.appendChild(bubbleDiv);
+      container.appendChild(groupDiv);
+    }
+
+    // Initial chat load
+    loadChatScenario('dm');
+  </script>
+</body>
+</html>

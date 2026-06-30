@@ -1,0 +1,47 @@
+Bhawani Singh
+Full Stack Engineer
++91-6378162057
+shekhbhawanisingh6@gmail.com
+linkedin.com/in/bhawani-singh-shekhawat7773
+
+Summary
+Full Stack Developer with hands-on experience building scalable web applications, blockchain-based systems,
+automation tools, and modern software solutions using React.js, Next.js, TypeScript, Node.js, Solidity, and
+OpenClaw. Skilled in frontend and backend development, REST APIs, system design, performance optimization,
+AI workflow orchestration, and agentic systems with practical project experience in real-time collaboration
+platforms, EVM smart contracts, and interactive visualization systems.
+
+Skills
+Technologies: React.js, Next.js, Node.js, Express.js, REST APIs, Git, GitHub, Docker, Vercel
+Languages: JavaScript, TypeScript, SQL, Solidity, HTML5, CSS3
+AI/Automation: OpenClaw, AI Workflows, Agentic AI Systems, Workflow Automation
+Core Concepts: System Design, Scalability, Performance Optimization, API Design
+
+Projects
+Afx402 | TypeScript, Solidity | January 2026 - February 2026
+- Developed afx402, a wallet-native agent payment and API marketplace using TypeScript, Next.js, Solidity, and
+  EVM smart contracts, implementing the x402 (HTTP 402) payment flow for pay-per-call APIs, prepaid balances,
+  subscriptions, and autonomous agent transactions.
+
+Parvati Phoshaks Ecommerce Website | React.js, Node.js, Express.js, MongoDB | February 2026 - March 2026
+- Developed a full-stack ecommerce platform with secure OAuth authentication, product management, shopping cart
+  functionality, and MongoDB-based data storage for scalable order and user management.
+- Integrated Razorpay payment gateway to support secure online transactions and seamless checkout experience with
+  responsive UI and REST API-based backend architecture.
+
+Wireless Communication Visualizer | JavaScript, React.js, D3.js, p5.js | October 2025 - November 2025
+- Built a wireless communication visualizer, an interactive React + Vite web application that visualizes key
+  wireless communication concepts using D3.js, p5.js, and Three.js to create real-time educational visualizations.
+
+Education
+B.Tech Communication and Computer Engineering, LNMIIT Jaipur, India
+Graduation: 2027
+Aggregate CGPA (5th sem): 5.89 / 10
+
+Relevant Coursework
+Data Structures & Algorithms, Database Management Systems, AI/ML, Computer Networks, Operating Systems,
+Computer Organization, Neural Networks & Applications, Social Network Analysis, Software Development,
+Object-Oriented Programming, Web Development, ESIoT
+
+12th pass, Kendriya Vidyalaya No. 4 Jaipur, India | 2022 | 89.2%
+10th pass, Kendriya Vidyalaya No. 4 Jaipur, India | 2020 | 76.6%

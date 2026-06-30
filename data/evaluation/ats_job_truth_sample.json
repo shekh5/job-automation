@@ -1,0 +1,14 @@
+[
+  {
+    "job_key": "ashby:9cb0729c-5bb4-403d-8234-9625bf7c9a1b",
+    "expected_status": "open",
+    "checked_manually_at": "2026-06-24T00:00:00Z",
+    "notes": "Verified this job is still actively accepting applications via the Ashby apply page."
+  },
+  {
+    "job_key": "ashby:9845c80d-95ba-4769-94a7-62408d73d603",
+    "expected_status": "closed",
+    "checked_manually_at": "2026-06-24T00:00:00Z",
+    "notes": "The page says 'This job is no longer available', so it should be marked closed by Phase 3E."
+  }
+]
