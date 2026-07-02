@@ -61,22 +61,22 @@ Personal job preference results should go to the user's private DM, not the grou
 
 ## Safe Commands
 
-- Validate JSON: `python3 -m json.tool /home/node/.openclaw/workspace/data/ats_api_sources.json`
-- Validate career sources: `python3 -m json.tool /home/node/.openclaw/workspace/data/career_page_sources.json`
-- Syntax-check ATS helpers: `python3 -m py_compile /home/node/.openclaw/workspace/scripts/ats_common.py /home/node/.openclaw/workspace/scripts/fetch_jobs_*.py`
-- Run ATS helper: `python3 /home/node/.openclaw/workspace/scripts/fetch_jobs_ats.py`
-- Verify ATS persistence: `python3 /home/node/.openclaw/workspace/scripts/verify_ats_supabase.py`
-- Run local ATS job verification: `python3 /home/node/.openclaw/workspace/scripts/verify_ats_jobs.py --limit 2000`
-- Run ATS URL reachability verification: `python3 /home/node/.openclaw/workspace/scripts/verify_ats_urls.py --limit 200`
-- Run ATS open/closed classification: `python3 /home/node/.openclaw/workspace/scripts/verify_ats_open_closed.py --limit 2000`
-- Query job decisions: `python3 /home/node/.openclaw/workspace/scripts/query_ats_evidence.py --view jobs --limit 50`
-- Query source failures: `python3 /home/node/.openclaw/workspace/scripts/query_ats_evidence.py --view fetches --outcome error --limit 50`
-- Query job verification results: `python3 /home/node/.openclaw/workspace/scripts/query_ats_verifications.py --latest --limit 50`
-- Test ATS adapters: `python3 -m unittest discover -s /home/node/.openclaw/workspace/scripts/tests -v`
-- Inspect Jaskirat workspace changes: `git -C /home/node/.openclaw/workspace/jaskirat status --short`
-- Automate Application to ATS Job: `python3 /home/node/.openclaw/workspace/scripts/ats_apply.py <job_url>`
-- Agentic Application (Universal LLM Browser): `python3 /home/node/.openclaw/workspace/scripts/agentic_apply.py <job_url>`
-- Submit Final Application (After Human Approval): `python3 /home/node/.openclaw/workspace/scripts/ats_submit.py <session_id>`
+- Validate JSON: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python -m json.tool /Users/bhawanisingh/.openclaw/workspace/data/ats_api_sources.json`
+- Validate career sources: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python -m json.tool /Users/bhawanisingh/.openclaw/workspace/data/career_page_sources.json`
+- Syntax-check ATS helpers: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python -m py_compile /Users/bhawanisingh/.openclaw/workspace/scripts/ats_common.py /Users/bhawanisingh/.openclaw/workspace/scripts/fetch_jobs_*.py`
+- Run ATS helper: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/fetch_jobs_ats.py`
+- Verify ATS persistence: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/verify_ats_supabase.py`
+- Run local ATS job verification: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/verify_ats_jobs.py --limit 2000`
+- Run ATS URL reachability verification: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/verify_ats_urls.py --limit 200`
+- Run ATS open/closed classification: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/verify_ats_open_closed.py --limit 2000`
+- Query job decisions: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/query_ats_evidence.py --view jobs --limit 50`
+- Query source failures: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/query_ats_evidence.py --view fetches --outcome error --limit 50`
+- Query job verification results: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/query_ats_verifications.py --latest --limit 50`
+- Test ATS adapters: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python -m unittest discover -s /Users/bhawanisingh/.openclaw/workspace/scripts/tests -v`
+- Inspect Jaskirat workspace changes: `git -C /Users/bhawanisingh/.openclaw/workspace/jaskirat status --short`
+- Automate Application to ATS Job: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/ats_apply.py <job_url>`
+- Agentic Application (Universal LLM Browser): `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/stealth_applier/src/stealth_apply.py <job_url>`
+- Submit Final Application (After Human Approval): `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/ats_submit.py <session_id>`
 
 ## STRICT BROWSER & APPLICATION RULES (CRITICAL)
 

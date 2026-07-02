@@ -7,6 +7,9 @@ import os
 import base64
 from pathlib import Path
 
+from dotenv import load_dotenv
+load_dotenv()
+
 HOST_WORKER_URL = os.environ.get("HOST_WORKER_URL", "http://127.0.0.1:4555")
 OPENCLAW_API_URL = os.environ.get("OPENCLAW_API_URL", "http://127.0.0.1:18789/v1/chat/completions")
 # Using a fixed model that maps to whatever OpenClaw has loaded
@@ -138,7 +141,8 @@ def query_llm(messages, token):
         "temperature": 0.0
     }
     
-    return post(OPENCLAW_API_URL, data=data, headers=headers)
+    result = post(OPENCLAW_API_URL, data=data, headers=headers)
+    return result
 
 def load_profile():
     profile_path = os.environ.get("AGENTIC_PROFILE_PATH", DEFAULT_PROFILE_PATH)
@@ -163,8 +167,23 @@ def detect_resume_path():
 def known_greenhouse_answers(profile):
     if not profile:
         return {}
+    clojure_ability = profile.get("clojure_ability")
+    if isinstance(clojure_ability, str) and clojure_ability.strip().lower() in {"none", "no", "n/a"}:
+        clojure_ability = "No"
     answers = {
         "country": profile.get("country_residence") or profile.get("location"),
+        "degree--0": profile.get("degree"),
+        "discipline--0": profile.get("discipline_major"),
+        "end-year--0": profile.get("graduation_end_year"),
+        "question_4824417008": profile.get("linkedin_url"),
+        "question_4824418008": profile.get("currently_working_in_saas_or_product_company"),
+        "question_13887930008": profile.get("uses_ai_coding_tools"),
+        "question_13887931008": profile.get("comfortable_with_30_45_lpa_compensation"),
+        "question_4824419008": profile.get("has_2_plus_years_full_stack_experience"),
+        "question_4824420008": profile.get("can_join_within_45_days"),
+        "question_4846730008": clojure_ability,
+        "question_4824421008": profile.get("can_work_remotely_based_in_india") or "Yes",
+        "question_13887932008": profile.get("loom_url"),
         "question_36707269002": profile.get("linkedin_url"),
         "question_36707276002": profile.get("country_residence"),
         "question_36707271002": profile.get("country_residence"),
@@ -285,6 +304,7 @@ def main():
                 f"{known_profile_context}"
                 "CRITICAL RULE: Always verify that your previous action (click/type) actually worked by observing the new page state before taking the next action. "
                 "CRITICAL RULE: Inputs marked alreadyHandled=true in the page state are already answered from the user's confirmed profile. Do not click or type into those inputs again; move to unanswered required fields or finish for human review.\n"
+                "CRITICAL RULE: If a blank input has a knownAnswer value, use that value to fill or select the field. Do not finish while any required blank field with knownAnswer is still visibly unanswered.\n"
                 "CRITICAL RULE FOR DROPDOWNS: If typing into a field (like Country) does not register the selection, DO NOT keep typing. The field is likely a custom dropdown. You must first use 'click_coordinate' on the input field to open the dropdown menu, then on the NEXT turn, use 'click_coordinate' on the visible option that appears.\n"
                 "CRITICAL RULE: If a required question asks for personal information not in the resume (e.g. Visa sponsorship, LinkedIn URL, specific history) and you DO NOT know the answer, DO NOT GUESS. Call the 'request_info' tool to ask the user.\n"
                 "CRITICAL RULE: DO NOT click the final submit button yourself. When the application is completely filled and ready to submit, call the finish tool with success=true and message='Ready for human review'.\n\n"
@@ -310,10 +330,13 @@ def main():
             for field in dom.get("inputs", []):
                 answer = known_answers.get(field.get("id"))
                 if answer:
-                    field["value"] = answer
-                    field["alreadyHandled"] = True
-                    field["disabled"] = True
-                    field["readOnly"] = True
+                    if field.get("value"):
+                        field["value"] = answer
+                        field["alreadyHandled"] = True
+                        field["disabled"] = True
+                        field["readOnly"] = True
+                    else:
+                        field["knownAnswer"] = answer
         
         with open(log_dir / f"step_{step}_dom.json", "w") as f:
             json.dump(dom, f, indent=2)
