@@ -43,35 +43,41 @@ function compactText(value: string | null | undefined) {
 }
 
 async function fillResumeField(page: Page, resumePath: string | undefined, result: FillResult) {
-  const fileInputs = await page.locator('input[type="file"]').evaluateAll((elements) => {
-    return elements.map((element, index) => {
-      let labelText = '';
-      const id = element.getAttribute('id');
-      if (id) {
-        const label = document.querySelector(`label[for="${CSS.escape(id)}"]`);
-        if (label?.textContent) labelText = label.textContent;
-      }
-      if (!labelText) {
-        const wrappingLabel = element.closest('label');
-        if (wrappingLabel?.textContent) labelText = wrappingLabel.textContent;
-      }
-      if (!labelText) {
-        const parentLabel = element.parentElement?.querySelector('label');
-        if (parentLabel?.textContent) labelText = parentLabel.textContent;
-      }
+  const frames = page.frames();
+  const fileInputs = [];
+  for (let frameIndex = 0; frameIndex < frames.length; frameIndex += 1) {
+    const frame = frames[frameIndex];
+    const frameInputs = await frame.locator('input[type="file"]').evaluateAll((elements) => {
+      return elements.map((element, index) => {
+        let labelText = '';
+        const id = element.getAttribute('id');
+        if (id) {
+          const label = document.querySelector(`label[for="${CSS.escape(id)}"]`);
+          if (label?.textContent) labelText = label.textContent;
+        }
+        if (!labelText) {
+          const wrappingLabel = element.closest('label');
+          if (wrappingLabel?.textContent) labelText = wrappingLabel.textContent;
+        }
+        if (!labelText) {
+          const parentLabel = element.parentElement?.querySelector('label');
+          if (parentLabel?.textContent) labelText = parentLabel.textContent;
+        }
 
-      const input = element as HTMLInputElement;
-      return {
-        index,
-        label: labelText,
-        ariaLabel: input.getAttribute('aria-label') || '',
-        name: input.getAttribute('name') || '',
-        id: input.getAttribute('id') || '',
-        accept: input.getAttribute('accept') || '',
-        disabled: input.disabled,
-      };
+        const input = element as HTMLInputElement;
+        return {
+          index,
+          label: labelText,
+          ariaLabel: input.getAttribute('aria-label') || '',
+          name: input.getAttribute('name') || '',
+          id: input.getAttribute('id') || '',
+          accept: input.getAttribute('accept') || '',
+          disabled: input.disabled,
+        };
+      });
     });
-  });
+    fileInputs.push(...frameInputs.map(item => ({ ...item, frameIndex })));
+  }
 
   if (fileInputs.length === 0) {
     if (resumePath) {
@@ -110,7 +116,7 @@ async function fillResumeField(page: Page, resumePath: string | undefined, resul
   }
 
   try {
-    await page.locator('input[type="file"]').nth(selected.index).setInputFiles(resumePath);
+    await frames[selected.frameIndex].locator('input[type="file"]').nth(selected.index).setInputFiles(resumePath);
     result.filled.push({ field: 'resume', label: selected.searchable || 'resume upload' });
   } catch {
     result.skipped.push({ label: selected.searchable || 'resume upload', reason: 'upload_failed' });
@@ -124,39 +130,45 @@ export async function fillCommonFields(page: Page, profile: ApplicantProfile, re
     skipped: [],
   };
 
-  const fields = await page.locator('input, textarea').evaluateAll((elements) => {
-    return elements.map((element, index) => {
-      let labelText = '';
-      const id = element.getAttribute('id');
-      if (id) {
-        const label = document.querySelector(`label[for="${CSS.escape(id)}"]`);
-        if (label?.textContent) labelText = label.textContent;
-      }
-      if (!labelText) {
-        const wrappingLabel = element.closest('label');
-        if (wrappingLabel?.textContent) labelText = wrappingLabel.textContent;
-      }
-      if (!labelText) {
-        const parentLabel = element.parentElement?.querySelector('label');
-        if (parentLabel?.textContent) labelText = parentLabel.textContent;
-      }
+  const frames = page.frames();
+  const fields = [];
+  for (let frameIndex = 0; frameIndex < frames.length; frameIndex += 1) {
+    const frame = frames[frameIndex];
+    const frameFields = await frame.locator('input, textarea').evaluateAll((elements) => {
+      return elements.map((element, index) => {
+        let labelText = '';
+        const id = element.getAttribute('id');
+        if (id) {
+          const label = document.querySelector(`label[for="${CSS.escape(id)}"]`);
+          if (label?.textContent) labelText = label.textContent;
+        }
+        if (!labelText) {
+          const wrappingLabel = element.closest('label');
+          if (wrappingLabel?.textContent) labelText = wrappingLabel.textContent;
+        }
+        if (!labelText) {
+          const parentLabel = element.parentElement?.querySelector('label');
+          if (parentLabel?.textContent) labelText = parentLabel.textContent;
+        }
 
-      const input = element as HTMLInputElement | HTMLTextAreaElement;
-      return {
-        index,
-        tag: input.tagName.toLowerCase(),
-        type: input instanceof HTMLInputElement ? (input.type || 'text').toLowerCase() : 'textarea',
-        label: labelText,
-        placeholder: input.getAttribute('placeholder') || '',
-        ariaLabel: input.getAttribute('aria-label') || '',
-        name: input.getAttribute('name') || '',
-        id: input.getAttribute('id') || '',
-        disabled: input.disabled,
-        readOnly: input.readOnly,
-        value: input.value,
-      };
+        const input = element as HTMLInputElement | HTMLTextAreaElement;
+        return {
+          index,
+          tag: input.tagName.toLowerCase(),
+          type: input instanceof HTMLInputElement ? (input.type || 'text').toLowerCase() : 'textarea',
+          label: labelText,
+          placeholder: input.getAttribute('placeholder') || '',
+          ariaLabel: input.getAttribute('aria-label') || '',
+          name: input.getAttribute('name') || '',
+          id: input.getAttribute('id') || '',
+          disabled: input.disabled,
+          readOnly: input.readOnly,
+          value: input.value,
+        };
+      });
     });
-  });
+    fields.push(...frameFields.map(item => ({ ...item, frameIndex })));
+  }
 
   const filledFields = new Set<ProfileField>();
 
@@ -198,7 +210,7 @@ export async function fillCommonFields(page: Page, profile: ApplicantProfile, re
       continue;
     }
 
-    const locator = page.locator('input, textarea').nth(field.index);
+    const locator = frames[field.frameIndex].locator('input, textarea').nth(field.index);
     const currentValue = await locator.inputValue();
     if (currentValue) {
       result.skipped.push({ label: match.field, reason: 'already_filled' });

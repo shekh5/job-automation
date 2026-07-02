@@ -110,6 +110,7 @@ export class HostWorkerSessionManager {
 
     try {
       await session.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+      await this.syncActivePage(session);
       session.currentUrl = session.page.url();
       session.status = 'ready';
       session.error = null;
@@ -129,6 +130,7 @@ export class HostWorkerSessionManager {
       throw new Error('Browser page is not available');
     }
 
+    await this.syncActivePage(session);
     const currentUrl = session.page.url();
     const handler = await detectAts(currentUrl, session.page);
     console.log('DETECTED HANDLER:', handler?.name);
@@ -152,6 +154,7 @@ export class HostWorkerSessionManager {
     }
 
     try {
+      await this.syncActivePage(session);
       await this.clickSubmitButton(session.page);
       
       session.currentUrl = session.page.url();
@@ -171,6 +174,7 @@ export class HostWorkerSessionManager {
     }
 
     try {
+      await this.syncActivePage(session);
       await session.page.waitForLoadState('domcontentloaded', { timeout: 10000 }).catch(() => {});
 
       const characterInputs = session.page.locator('input[maxlength="1"], input[aria-label*="digit" i], input[aria-label*="code" i]');
@@ -247,12 +251,14 @@ export class HostWorkerSessionManager {
       throw new Error('Browser page is not available');
     }
 
+    await this.syncActivePage(session);
     const page = session.page;
     const inspection = await page.evaluate(`(() => {
       const summarizeInput = (element, index) => {
         const input = element;
         const id = input.getAttribute('id') || '';
         const label = id ? document.querySelector('label[for="' + CSS.escape(id) + '"]')?.textContent || '' : '';
+        const rect = input.getBoundingClientRect();
         return {
           index,
           tag: input.tagName.toLowerCase(),
@@ -266,11 +272,13 @@ export class HostWorkerSessionManager {
           disabled: !!input.disabled,
           readOnly: !!input.readOnly,
           visible: !!(input.offsetWidth || input.offsetHeight || input.getClientRects().length),
+          box: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
         };
       };
 
       const summarizeButton = (element, index) => {
         const button = element;
+        const rect = button.getBoundingClientRect();
         return {
           index,
           tag: button.tagName.toLowerCase(),
@@ -279,6 +287,7 @@ export class HostWorkerSessionManager {
           disabled: !!button.disabled,
           ariaDisabled: button.getAttribute('aria-disabled') || '',
           visible: !!(button.offsetWidth || button.offsetHeight || button.getClientRects().length),
+          box: { x: rect.x, y: rect.y, width: rect.width, height: rect.height }
         };
       };
 
@@ -300,6 +309,7 @@ export class HostWorkerSessionManager {
       throw new Error('Browser page is not available');
     }
 
+    await this.syncActivePage(session);
     return await session.page.screenshot({ type: 'png', fullPage: true });
   }
 
@@ -355,21 +365,29 @@ export class HostWorkerSessionManager {
   }
 
   private async clickSubmitButton(page: Page) {
-    const submitButtons = page.locator('button[type="submit"], input[type="submit"], button:has-text("Submit Application"), button:has-text("Submit application"), button:has-text("Submit"), button:has-text("Verify"), button:has-text("Continue")');
+    const selectors = 'button[type="submit"], input[type="submit"], button:has-text("Submit Application"), button:has-text("Submit application"), button:has-text("Submit"), button:has-text("Verify"), button:has-text("Continue")';
+    const frames = page.frames();
 
-    const count = await submitButtons.count();
-    if (count === 0) {
-      throw new Error('Could not find a submit button on the page');
+    let sawAny = false;
+    for (const frame of frames) {
+      const submitButtons = frame.locator(selectors);
+      const count = await submitButtons.count();
+      if (count === 0) continue;
+      sawAny = true;
+
+      for (let index = count - 1; index >= 0; index -= 1) {
+        const button = submitButtons.nth(index);
+        if (!(await button.isVisible().catch(() => false))) continue;
+        if (await button.isDisabled().catch(() => false)) continue;
+        const ariaDisabled = await button.getAttribute('aria-disabled').catch(() => null);
+        if (ariaDisabled === 'true') continue;
+        await button.click();
+        return;
+      }
     }
 
-    for (let index = count - 1; index >= 0; index -= 1) {
-      const button = submitButtons.nth(index);
-      if (!(await button.isVisible().catch(() => false))) continue;
-      if (await button.isDisabled().catch(() => false)) continue;
-      const ariaDisabled = await button.getAttribute('aria-disabled').catch(() => null);
-      if (ariaDisabled === 'true') continue;
-      await button.click();
-      return;
+    if (!sawAny) {
+      throw new Error('Could not find a submit button on the page');
     }
 
     throw new Error('Could not find an enabled submit button on the page');
@@ -378,22 +396,74 @@ export class HostWorkerSessionManager {
   async clickElement(applicationId: string, selector: string) {
     const session = this.requireSession(applicationId);
     if (!session.page) throw new Error('Browser page is not available');
-    await session.page.locator(selector).first().click({ timeout: 5000 });
+    await this.syncActivePage(session);
+    const locator = session.page.locator(selector).first();
+    try {
+      await locator.click({ timeout: 5000 });
+    } catch (error) {
+      console.log(`Click intercepted/timed out for ${selector}, forcing click...`);
+      try {
+        await locator.click({ force: true, timeout: 2000 });
+      } catch (forceError) {
+        console.log(`Force click failed for ${selector}, trying parent...`);
+        await locator.locator('..').click({ force: true, timeout: 2000 });
+      }
+    }
     return { session: this.snapshot(session) };
   }
 
   async typeElement(applicationId: string, selector: string, text: string) {
     const session = this.requireSession(applicationId);
     if (!session.page) throw new Error('Browser page is not available');
-    await session.page.locator(selector).first().fill(text, { timeout: 5000 });
+    await this.syncActivePage(session);
+    const locator = session.page.locator(selector).first();
+    try {
+      await locator.fill(text, { timeout: 5000 });
+    } catch (error) {
+      console.log(`Fill intercepted/timed out for ${selector}, forcing fill...`);
+      await locator.fill(text, { force: true, timeout: 2000 });
+    }
+    return { session: this.snapshot(session) };
+  }
+
+  async clickCoordinate(applicationId: string, x: number, y: number) {
+    const session = this.requireSession(applicationId);
+    if (!session.page) throw new Error('Browser page is not available');
+    await this.syncActivePage(session);
+    await session.page.mouse.click(x, y);
+    return { session: this.snapshot(session) };
+  }
+
+  async typeCoordinate(applicationId: string, x: number, y: number, text: string) {
+    const session = this.requireSession(applicationId);
+    if (!session.page) throw new Error('Browser page is not available');
+    await this.syncActivePage(session);
+    await session.page.mouse.click(x, y);
+    await session.page.keyboard.type(text);
     return { session: this.snapshot(session) };
   }
 
   async evaluateScript(applicationId: string, script: string) {
     const session = this.requireSession(applicationId);
     if (!session.page) throw new Error('Browser page is not available');
+    await this.syncActivePage(session);
     const result = await session.page.evaluate(script);
     return { session: this.snapshot(session), result };
+  }
+
+  private async syncActivePage(session: WorkerSession) {
+    if (!session.context) return;
+    const pages = session.context.pages().filter(page => !page.isClosed());
+    if (pages.length === 0) {
+      session.page = null;
+      return;
+    }
+
+    // Workday and other ATSs sometimes spawn the application form in a new tab
+    // or popup. Prefer the newest live page so fill/submit runs on the form.
+    const latestPage = pages[pages.length - 1];
+    session.page = latestPage;
+    session.currentUrl = latestPage.url();
   }
 
   private snapshot(session: WorkerSession): WorkerSessionSnapshot {

@@ -167,6 +167,39 @@ export function createHostWorkerApp(manager = new HostWorkerSessionManager()) {
     }
   });
 
+  app.post('/sessions/:id/clickAt', async (req, res) => {
+    const { x, y } = req.body || {};
+    if (typeof x !== 'number' || typeof y !== 'number') {
+      return res.status(400).json({ error: 'Missing numeric x and y' });
+    }
+    try {
+      const result = await manager.clickCoordinate(req.params.id, x, y);
+      res.json(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = message.startsWith('Session not found') ? 404 : 500;
+      res.status(status).json({ error: message });
+    }
+  });
+
+  app.post('/sessions/:id/typeAt', async (req, res) => {
+    const { x, y, text } = req.body || {};
+    if (typeof x !== 'number' || typeof y !== 'number') {
+      return res.status(400).json({ error: 'Missing numeric x and y' });
+    }
+    if (typeof text !== 'string') {
+      return res.status(400).json({ error: 'Missing text' });
+    }
+    try {
+      const result = await manager.typeCoordinate(req.params.id, x, y, text);
+      res.json(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const status = message.startsWith('Session not found') ? 404 : 500;
+      res.status(status).json({ error: message });
+    }
+  });
+
   app.post('/sessions/:id/evaluate', async (req, res) => {
     const { script } = req.body || {};
     if (!script || typeof script !== 'string') {

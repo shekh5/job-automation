@@ -78,6 +78,13 @@ Personal job preference results should go to the user's private DM, not the grou
 - Agentic Application (Universal LLM Browser): `python3 /home/node/.openclaw/workspace/scripts/agentic_apply.py <job_url>`
 - Submit Final Application (After Human Approval): `python3 /home/node/.openclaw/workspace/scripts/ats_submit.py <session_id>`
 
+## STRICT BROWSER & APPLICATION RULES (CRITICAL)
+
+- **DO NOT USE NATIVE BROWSER TOOLS**: Never attempt to use OpenClaw's native `web_fetch`, `web_search`, or `openclaw browser` CLI commands to visit the job link yourself! You MUST pass the URL directly as an argument to the python script!
+- **DO NOT worry about missing Linux libraries or Chromium!** The browser actually runs completely outside your sandbox via the HostWorker on port 4555, so the python scripts WILL work perfectly. 
+- **STRICT FAILURE HANDLING:** If the `agentic_apply.py` or `ats_apply.py` script fails for ANY reason (e.g., "Network is unreachable", "Connection refused", or any crash), DO NOT attempt any alternative methods, fallback scripts, or native CLI commands (like `openclaw browser open`). Immediately stop, tell the user on Telegram that the script failed, and provide them the exact error output so they can fix their local backend.
+- **RESUME REQUIREMENT:** If there is no real `resume.pdf` in the workspace, you must politely demand that the user uploads their resume first before you run the application script.
+
 If a command needs network and fails with a likely sandbox or network restriction, rerun only with the needed approval path.
 
 ## Output Rules
