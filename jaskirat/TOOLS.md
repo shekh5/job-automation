@@ -75,7 +75,7 @@ Personal job preference results should go to the user's private DM, not the grou
 - Test ATS adapters: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python -m unittest discover -s /Users/bhawanisingh/.openclaw/workspace/scripts/tests -v`
 - Inspect Jaskirat workspace changes: `git -C /Users/bhawanisingh/.openclaw/workspace/jaskirat status --short`
 - Automate Application to ATS Job: `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/ats_apply.py <job_url>`
-- Agentic Application (Universal LLM Browser): `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/stealth_applier/src/stealth_apply.py <job_url>`
+- Agentic Application (Universal LLM Browser): `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/agentic_apply.py <job_url>`
 - Submit Final Application (After Human Approval): `/Users/bhawanisingh/.openclaw/workspace/.venv/bin/python /Users/bhawanisingh/.openclaw/workspace/scripts/ats_submit.py <session_id>`
 
 ## STRICT BROWSER & APPLICATION RULES (CRITICAL)

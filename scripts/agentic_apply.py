@@ -130,6 +130,20 @@ def query_llm(messages, token):
                     "required": ["missing_fields"]
                 }
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_current_screenshot",
+                "description": "Call this when you are ambiguous about the state of the page (e.g. dropdown didn't open, element position is unclear, form did not update) to fetch a fresh screenshot and inspect the exact visual state.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "reason": {"type": "string", "description": "The exact ambiguity or problem you are trying to visually verify."}
+                    },
+                    "required": ["reason"]
+                }
+            }
         }
     ]
 
@@ -198,34 +212,80 @@ def known_greenhouse_answers(profile):
     }
     return {key: value for key, value in answers.items() if value}
 
-def prefill_known_greenhouse_questions(session_id, profile):
-    answers = known_greenhouse_answers(profile)
-    if not answers:
+def prefill_custom_dropdowns(session_id, profile):
+    """
+    Natively pre-fills all HTML select dropdowns on the page by semantically matching
+    the label text of the questions to profile information keys.
+    """
+    if not profile:
         return None
+        
     script = f"""
 (() => {{
-  const answers = {json.dumps(answers)};
+  const profile = {json.dumps(profile)};
   const filled = [];
-  for (const [id, value] of Object.entries(answers)) {{
-    const element = document.getElementById(id);
-    if (!element) continue;
-    const prototype = element.tagName === 'TEXTAREA'
-      ? window.HTMLTextAreaElement.prototype
-      : window.HTMLInputElement.prototype;
-    const valueSetter = Object.getOwnPropertyDescriptor(prototype, 'value')?.set;
-    element.focus();
-    if (valueSetter) {{
-      valueSetter.call(element, value);
-    }} else {{
-      element.value = value;
+  
+  const selectElements = document.querySelectorAll('select');
+  selectElements.forEach(select => {{
+    let labelText = "";
+    if (select.id) {{
+       const labelEl = document.querySelector(`label[for="${{select.id}}"]`);
+       if (labelEl) labelText = labelEl.innerText;
     }}
-    element.dispatchEvent(new Event('input', {{ bubbles: true }}));
-    element.dispatchEvent(new KeyboardEvent('keydown', {{ bubbles: true, key: 'Enter', code: 'Enter' }}));
-    element.dispatchEvent(new KeyboardEvent('keyup', {{ bubbles: true, key: 'Enter', code: 'Enter' }}));
-    element.dispatchEvent(new Event('change', {{ bubbles: true }}));
-    element.blur();
-    filled.push({{ id, value, observed: element.value }});
-  }}
+    if (!labelText) {{
+       const parent = select.closest('.field') || select.closest('.question') || select.parentNode;
+       if (parent) {{
+          const labelEl = parent.querySelector('label') || parent.querySelector('.label') || parent;
+          labelText = labelEl.innerText;
+       }}
+    }}
+    
+    if (!labelText) return;
+    labelText = labelText.toLowerCase();
+    
+    let answer = "";
+    if (labelText.includes('saas') || labelText.includes('product company')) {{
+       answer = profile.currently_working_in_saas_or_product_company;
+    }} else if (labelText.includes('ai') || labelText.includes('copilot') || labelText.includes('coding tool')) {{
+       answer = profile.uses_ai_coding_tools;
+    }} else if (labelText.includes('compensation') || labelText.includes('lpa') || labelText.includes('salary') || labelText.includes('rupees') || labelText.includes('expected')) {{
+       answer = profile.comfortable_with_30_45_lpa_compensation;
+    }} else if (labelText.includes('join') || labelText.includes('notice') || labelText.includes('days')) {{
+       answer = profile.can_join_within_45_days || profile.notice_period;
+    }} else if (labelText.includes('clojure')) {{
+       answer = profile.clojure_ability;
+    }} else if (labelText.includes('visa') || labelText.includes('sponsorship') || labelText.includes('authorized')) {{
+       answer = profile.visa_sponsorship;
+    }} else if (labelText.includes('remote') || labelText.includes('india')) {{
+       answer = profile.can_work_remotely_based_in_india;
+    }} else if (labelText.includes('degree') || labelText.includes('education')) {{
+       answer = profile.degree;
+    }} else if (labelText.includes('discipline') || labelText.includes('major') || labelText.includes('study')) {{
+       answer = profile.discipline_major;
+    }} else if (labelText.includes('country') || labelText.includes('residence')) {{
+       answer = profile.country_residence || profile.location;
+    }}
+    
+    if (!answer) return;
+    
+    const optionToSelect = Array.from(select.options).find(opt => {{
+        const text = opt.text.toLowerCase();
+        const val = opt.value.toLowerCase();
+        const ans = String(answer).toLowerCase();
+        return val === ans || text.includes(ans) ||
+               (ans === 'yes' && text.startsWith('yes')) ||
+               (ans === 'no' && text.startsWith('no'));
+    }});
+    
+    if (optionToSelect) {{
+       select.value = optionToSelect.value;
+       select.dispatchEvent(new Event('change', {{ bubbles: true }}));
+       if (window.jQuery) {{
+          try {{ window.jQuery(select).trigger('change'); }} catch(e) {{}}
+       }}
+       filled.push({{ label: labelText, value: optionToSelect.text }});
+    }}
+  }});
   return filled;
 }})()
 """
@@ -266,19 +326,18 @@ def main():
             fill_payload["resume_path"] = resume_path
         print(f"Pre-filling profile fields{'' if not resume_path else f' and resume from {resume_path}'}...")
         try:
-            if not resume_session_id:
-                fill_res = post(f"{HOST_WORKER_URL}/sessions/{session_id}/fill", fill_payload)
-                print(json.dumps(fill_res, indent=2))
-                known_fill_res = prefill_known_greenhouse_questions(session_id, profile)
-                if known_fill_res is not None:
-                    print("Pre-filled known Greenhouse question IDs:")
-                    print(json.dumps(known_fill_res.get("result"), indent=2))
-                    time.sleep(2)
-                    known_fill_res = prefill_known_greenhouse_questions(session_id, profile)
-                    print("Re-applied known Greenhouse question IDs:")
-                    print(json.dumps(known_fill_res.get("result"), indent=2))
-            else:
-                print("Skipping pre-fill because we are resuming an existing session.")
+            # We always upload the resume and pre-fill profile fields to ensure state is recovered
+            fill_res = post(f"{HOST_WORKER_URL}/sessions/{session_id}/fill", fill_payload)
+            print(json.dumps(fill_res, indent=2))
+                
+            known_fill_res = prefill_custom_dropdowns(session_id, profile)
+            if known_fill_res is not None:
+                print("Pre-filled custom dropdown answers:")
+                print(json.dumps(known_fill_res.get("result"), indent=2))
+                time.sleep(2)
+                known_fill_res = prefill_custom_dropdowns(session_id, profile)
+                print("Re-applied custom dropdown answers:")
+                print(json.dumps(known_fill_res.get("result"), indent=2))
         except Exception as e:
             print(f"Pre-fill step failed: {e}")
             sys.exit(1)
@@ -441,7 +500,47 @@ def main():
                     print(f"MISSING_REQUIRED_INFO: {', '.join(missing)}")
                     print(f"SESSION_ID: {session_id}")
                     print(f"======================================\n")
+                    
+                    # Archive ambiguity brain screenshot and JSON
+                    try:
+                        ambiguity_dir = Path("/Users/bhawanisingh/.openclaw/workspace/memory/ambiguity_logs") / session_id
+                        ambiguity_dir.mkdir(parents=True, exist_ok=True)
+                        if screenshot_data:
+                            with open(ambiguity_dir / f"step_{step}_blocked.png", "wb") as f:
+                                f.write(screenshot_data)
+                        with open(ambiguity_dir / f"step_{step}_blocked.json", "w") as f:
+                            json.dump({
+                                "step": step,
+                                "type": "blocked",
+                                "missing_fields": missing,
+                                "dom": dom
+                            }, f, indent=2)
+                    except Exception as archive_err:
+                        print(f"Failed to archive block state: {archive_err}")
+                        
                     sys.exit(2)
+                elif func_name == "get_current_screenshot":
+                    reason = args.get('reason', 'General inspection')
+                    print(f"📸 Visual inspection requested: {reason}")
+                    
+                    # Archive ambiguity brain screenshot and JSON
+                    try:
+                        ambiguity_dir = Path("/Users/bhawanisingh/.openclaw/workspace/memory/ambiguity_logs") / session_id
+                        ambiguity_dir.mkdir(parents=True, exist_ok=True)
+                        if screenshot_data:
+                            with open(ambiguity_dir / f"step_{step}_ambiguity.png", "wb") as f:
+                                f.write(screenshot_data)
+                        with open(ambiguity_dir / f"step_{step}_ambiguity.json", "w") as f:
+                            json.dump({
+                                "step": step,
+                                "type": "ambiguity",
+                                "reason": reason,
+                                "dom": dom
+                            }, f, indent=2)
+                        tool_result_msg["content"] = f"Success: Screenshot captured and archived. Look at the attached image content for step {step} to resolve your ambiguity."
+                    except Exception as archive_err:
+                        print(f"Failed to archive visual state: {archive_err}")
+                        tool_result_msg["content"] = f"Failed to capture screenshot: {archive_err}"
             except Exception as e:
                 print(f"Tool execution failed: {e}")
                 tool_result_msg["content"] = f"Failed: {e}"
